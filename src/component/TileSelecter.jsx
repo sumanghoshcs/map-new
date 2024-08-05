@@ -18,7 +18,6 @@ import {
 
 const UNSPLASH_ACCESS_KEY = "wv2KkbVrvAEGMg7RJW6kTMnOcqqYknCUsv87sYqAFjQ";
 
-// Define a placeholder GeoJSON object if not available
 const geojsonObject = {
   type: "FeatureCollection",
   features: [],
@@ -33,25 +32,25 @@ const App = () => {
   const [photoUrl, setPhotoUrl] = useState(null);
 
   const pointFeatures = [
-    [78.9629, 20.5937], // India
-    [77.1025, 28.7041], // Delhi
-    [72.8777, 19.076], // Mumbai
-    [12.9716, 77.5946], // Bangalore
-    [40.7128, -74.006], // New York
-    [48.8566, 2.3522], // Paris
-    [35.6895, 139.6917], // Tokyo
-    [34.0522, -118.2437], // Los Angeles
-    [22.438311, 87.416008], //jara
-    [22.565571, 88.370209], //kolkata
-    [78.4867, 17.385], // Hyderabad
-    [76.7794, 30.7333], // Chandigarh
-    [76.6394, 12.2958], // Mysore
-    [88.3639, 22.5726], // Kolkata
-    [74.8723, 32.7266], // Jammu
-    [88.2575, 22.5726], // Hooghly
-    [73.8478, 18.5204], // Pune
-    [75.8577, 26.9124], // Jaipur
-    [80.9462, 26.8467], // Lucknow
+    [78.9629, 20.5937],
+    [77.1025, 28.7041],
+    [72.8777, 19.076],
+    [12.9716, 77.5946],
+    [40.7128, -74.006],
+    [48.8566, 2.3522],
+    [35.6895, 139.6917],
+    [34.0522, -118.2437],
+    [22.438311, 87.416008],
+    [22.565571, 88.370209],
+    [78.4867, 17.385],
+    [76.7794, 30.7333],
+    [76.6394, 12.2958],
+    [88.3639, 22.5726],
+    [74.8723, 32.7266],
+    [88.2575, 22.5726],
+    [73.8478, 18.5204],
+    [75.8577, 26.9124],
+    [80.9462, 26.8467],
   ].map(
     (coord) =>
       new Feature({
@@ -85,9 +84,8 @@ const App = () => {
     }
   };
 
-  // Haversine formula to calculate distance between two coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the Earth in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
@@ -150,14 +148,12 @@ const App = () => {
     });
 
     initialMap.addLayer(geoJsonLayer);
-
-    // Handle feature clicks
     initialMap.on("click", (event) => {
       initialMap.forEachFeatureAtPixel(event.pixel, (feature) => {
         if (feature.getGeometry() instanceof Point) {
           const coord = toLonLat(feature.getGeometry().getCoordinates());
           const [lon, lat] = coord;
-          fetchPhotos(lat, lon); // Fetch photos within 10km
+          fetchPhotos(lat, lon);
           initialMap.getView().animate({
             center: feature.getGeometry().getCoordinates(),
             duration: 1000,
