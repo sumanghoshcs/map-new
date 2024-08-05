@@ -27,15 +27,14 @@ const geojsonObject = {
         coordinates: [0, 0],
       },
     },
-    // Add more features as needed
   ],
 };
 
 const pointFeatures = [
-  [78.9629, 20.5937], // Point in India
-  [77.1025, 28.7041], // Point in Delhi, India
-  [72.8777, 19.076], // Point in Mumbai, India
-  [78.9629, 20.5937], // Coordinates for a point in India
+  [78.9629, 20.5937],
+  [77.1025, 28.7041],
+  [72.8777, 19.076],
+  [78.9629, 20.5937],
 ].map(
   (coord) =>
     new Feature({
@@ -60,8 +59,8 @@ const App = () => {
         }),
       ],
       view: new View({
-        center: fromLonLat([78.9629, 20.5937]), // Centering the view on India
-        zoom: 3, // Adjust the zoom level as needed
+        center: fromLonLat([78.9629, 20.5937]),
+        zoom: 3,
       }),
       controls: [
         new Zoom(),
@@ -100,8 +99,7 @@ const App = () => {
     });
 
     initialMap.addLayer(geoJsonLayer);
-
-    // Add Vector Layer with ecoregions
+    
     const vectorLayer = new VectorLayer({
       source: new VectorSource({
         url: "https://openlayers.org/data/vector/ecoregions.json",
@@ -149,27 +147,24 @@ const App = () => {
       initialMap.forEachFeatureAtPixel(event.pixel, (feature) => {
         if (feature.getGeometry() instanceof Point) {
           const coord = toLonLat(feature.getGeometry().getCoordinates());
-          // const [lon, lat] = coord;
 
-          // Zoom in to the clicked point
           initialMap.getView().animate({
             center: feature.getGeometry().getCoordinates(),
-            duration: 1000, // Animation duration in milliseconds
-            zoom: 10, // Zoom level you want to zoom in to
+            duration: 1000,
+            zoom: 10,
           });
-
-          // fetchPhotos(lat, lon); // Fetch photos within 10km
+          // fetchPhotos(lat, lon);
         }
       });
     });
-    return () => initialMap.setTarget(null); // Cleanup map on component unmount
+    return () => initialMap.setTarget(null);
   }, []);
 
   useEffect(() => {
     if (circleLayer) {
       const features = pointFeatures.map((feature) => {
         const coord = toLonLat(feature.getGeometry().getCoordinates());
-        const circle = new CircleGeom(fromLonLat(coord), radius * 1000); // radius in meters
+        const circle = new CircleGeom(fromLonLat(coord), radius * 1000);
         return new Feature({ geometry: circle });
       });
 
