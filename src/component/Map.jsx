@@ -5,8 +5,8 @@ import View from "ol/View";
 import { Tile as TileLayer } from "ol/layer";
 import { OSM } from "ol/source";
 import { fromLonLat } from "ol/proj";
-import { Point } from "ol/geom"; // Import Point geometry
-import Feature from "ol/Feature"; // Import Feature
+import { Point } from "ol/geom";
+import Feature from "ol/Feature";
 import Control from "ol/control/Control";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
