@@ -14,6 +14,7 @@ import { OSM } from "ol/source";
 
 const MapComponent = () => {
   const key = "socwaaZqo0x6ii7USOIE";
+  const UNSPLASH_ACCESS_KEY = "wv2KkbVrvAEGMg7RJW6kTMnOcqqYknCUsv87sYqAFjQ";
   const attributions =
     '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> ' +
     '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>';
@@ -26,10 +27,10 @@ const MapComponent = () => {
   const [circleLayer, setCircleLayer] = useState(null);
   const [radius, setRadius] = useState(2); // in km
   const [userLocation, setUserLocation] = useState(null);
-  const [photos, setPhotos] = useState([]); 
+  const [photos, setPhotos] = useState([]);
 
   const pointFeatures = [
-   [78.9629, 20.5937],
+    [78.9629, 20.5937],
     [77.1025, 28.7041],
     [72.8777, 19.076],
     [12.9716, 77.5946],
@@ -54,6 +55,46 @@ const MapComponent = () => {
         geometry: new Point(fromLonLat(coord)),
       })
   );
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance;
+  };
+
+  const fetchPhotos = async (lat, lon) => {
+    try {
+      const response = await fetch(
+        `https://api.unsplash.com/photos/random?count=30&client_id=${UNSPLASH_ACCESS_KEY}`
+      );
+      const data = await response.json();
+      if (data) {
+        const filteredPhotos = data.filter((photo) => {
+          const photoLat = photo.location?.position?.latitude || lat;
+          const photoLon = photo.location?.position?.longitude || lon;
+          const distance = calculateDistance(lat, lon, photoLat, photoLon);
+          return distance <= 10;
+        });
+        if (filteredPhotos.length > 0) {
+          setPhotos(filteredPhotos[0].urls.regular);
+        } else {
+          setPhotos(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+      setPhotos("https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg");
+    }
+  };
 
   useEffect(() => {
     const layer = new TileLayer({
@@ -88,7 +129,6 @@ const MapComponent = () => {
     map.addLayer(initialCircleLayer);
     setCircleLayer(initialCircleLayer);
 
-    // Add initial Point Layer
     const pointLayer = new VectorLayer({
       source: new VectorSource({
         features: pointFeatures,
@@ -122,10 +162,12 @@ const MapComponent = () => {
       layers: [pointLayer],
     });
 
-    select.on('select', (event) => {
+    select.on("select", (event) => {
       const feature = event.target.getFeatures().getArray()[0];
       if (feature) {
         const coord = toLonLat(feature.getGeometry().getCoordinates());
+        const [lon, lat] = coord;
+        fetchPhotos(lat, lon);
         map.getView().animate({
           center: fromLonLat(coord),
           duration: 1000,
@@ -181,27 +223,11 @@ const MapComponent = () => {
     setRadius(parseFloat(event.target.value));
   };
 
-  const fetchPhotos = async (coords) => {
-    const [lon, lat] = coords;
-    const url = `https://api.unsplash.com/photos/random?client_id=YOUR_UNSPLASH_ACCESS_KEY&query=nature&count=10&orientation=landscape&content_filter=high&lat=${lat}&lon=${lon}&radius=${radius * 1000}`;
-  
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      setPhotos(data);
-    } catch (error) {
-      console.error("Error fetching photos:", error);
-    }
-  };
-  
-
   useEffect(() => {
     if (userLocation) {
       fetchPhotos(userLocation);
     }
   }, [userLocation]);
-
-  
 
   return (
     <div style={{ display: "flex" }}>
@@ -221,6 +247,15 @@ const MapComponent = () => {
             onChange={handleRadiusChange}
             style={{ width: "100%" }}
           />
+          <div>
+            {photos && (
+              <img
+                src={photos}
+                alt="Unsplash Photo"
+                style={{ width: "100%", marginTop: "20px" }}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

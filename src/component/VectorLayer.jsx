@@ -8,6 +8,7 @@ import { Point, Circle as CircleGeom } from "ol/geom";
 import { Feature } from "ol";
 import { Style, Icon } from "ol/style";
 import GeoJSON from "ol/format/GeoJSON";
+
 import {
   ScaleLine,
   Zoom,
@@ -17,21 +18,31 @@ import {
   Attribution,
 } from "ol/control";
 
-const geojsonObject = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [0, 0],
-      },
-    },
-  ],
-};
+const App = () => {
+  const UNSPLASH_ACCESS_KEY = "wv2KkbVrvAEGMg7RJW6kTMnOcqqYknCUsv87sYqAFjQ";
+  const mapRef = useRef();
+  const [map, setMap] = useState(null);
+  const [circleLayer, setCircleLayer] = useState(null);
+  const [radius, setRadius] = useState(2); // in km
+  const [selectedLayer, setSelectedLayer] = useState("points");
+  const [highlight, setHighlight] = useState(null);
+  const [photos, setPhotos] = useState([]);
 
-const pointFeatures = [
-   [78.9629, 20.5937],
+  const geojsonObject = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [0, 0],
+        },
+      },
+    ],
+  };
+
+  const pointFeatures = [
+    [78.9629, 20.5937],
     [77.1025, 28.7041],
     [72.8777, 19.076],
     [12.9716, 77.5946],
@@ -50,20 +61,54 @@ const pointFeatures = [
     [73.8478, 18.5204],
     [75.8577, 26.9124],
     [80.9462, 26.8467],
-].map(
-  (coord) =>
-    new Feature({
-      geometry: new Point(fromLonLat(coord)),
-    })
-);
+  ].map(
+    (coord) =>
+      new Feature({
+        geometry: new Point(fromLonLat(coord)),
+      })
+  );
 
-const App = () => {
-  const mapRef = useRef();
-  const [map, setMap] = useState(null);
-  const [circleLayer, setCircleLayer] = useState(null);
-  const [radius, setRadius] = useState(2); // in km
-  const [selectedLayer, setSelectedLayer] = useState("points");
-  const [highlight, setHighlight] = useState(null);
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance;
+  };
+
+  const fetchPhotos = async (lat, lon) => {
+    try {
+      const response = await fetch(
+        `https://api.unsplash.com/photos/random?count=30&client_id=${UNSPLASH_ACCESS_KEY}`
+      );
+      const data = await response.json();
+      if (data) {
+        const filteredPhotos = data.filter((photo) => {
+          const photoLat = photo.location?.position?.latitude || lat;
+          const photoLon = photo.location?.position?.longitude || lon;
+          const distance = calculateDistance(lat, lon, photoLat, photoLon);
+          return distance <= 10;
+        });
+        if (filteredPhotos.length > 0) {
+          setPhotos(filteredPhotos[0].urls.regular);
+        } else {
+          setPhotos(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+      setPhotos(
+        "https://letsenhance.io/static/8f5e523ee6b2479e26ecc91b9c25261e/1015f/MainAfter.jpg"
+      );
+    }
+  };
 
   useEffect(() => {
     const initialMap = new Map({
@@ -114,7 +159,7 @@ const App = () => {
     });
 
     initialMap.addLayer(geoJsonLayer);
-    
+
     const vectorLayer = new VectorLayer({
       source: new VectorSource({
         url: "https://openlayers.org/data/vector/ecoregions.json",
@@ -162,13 +207,14 @@ const App = () => {
       initialMap.forEachFeatureAtPixel(event.pixel, (feature) => {
         if (feature.getGeometry() instanceof Point) {
           const coord = toLonLat(feature.getGeometry().getCoordinates());
-
+          const [lon, lat] = coord;
+          // fetchPhotos(lat, lon);
           initialMap.getView().animate({
             center: feature.getGeometry().getCoordinates(),
             duration: 1000,
             zoom: 10,
           });
-          // fetchPhotos(lat, lon);
+          fetchPhotos(lat, lon);
         }
       });
     });
@@ -230,6 +276,15 @@ const App = () => {
           onChange={handleSliderChange}
           style={{ width: "100%" }}
         />
+        <div>
+          {photos && (
+            <img
+              src={photos}
+              alt="Unsplash Photo"
+              style={{ width: "100%", marginTop: "20px" }}
+            />
+          )}
+        </div>
         <div id="info" className="info" style={{ marginTop: "20px" }}></div>
       </div>
     </div>
