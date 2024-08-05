@@ -25,13 +25,13 @@ const MapComponent = () => {
   });
   const [circleLayer, setCircleLayer] = useState(null);
   const [radius, setRadius] = useState(2); // in km
-  const [userLocation, setUserLocation] = useState(null); // User's current location
+  const [userLocation, setUserLocation] = useState(null);
   const [photos, setPhotos] = useState([]); 
 
   const pointFeatures = [
-    [78.9629, 20.5937], // Point in India
-    [77.1025, 28.7041], // Point in Delhi, India
-    [72.8777, 19.076], // Point in Mumbai, India
+    [78.9629, 20.5937],
+    [77.1025, 28.7041],
+    [72.8777, 19.076],
   ].map(
     (coord) =>
       new Feature({
@@ -101,7 +101,6 @@ const MapComponent = () => {
       }
     });
 
-    // Handle click events on point features
     const select = new Select({
       condition: click,
       layers: [pointLayer],
@@ -121,7 +120,6 @@ const MapComponent = () => {
 
     map.addInteraction(select);
 
-    // Geolocation: Get user's current location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
         const coords = [position.coords.longitude, position.coords.latitude];
@@ -146,7 +144,7 @@ const MapComponent = () => {
     if (circleLayer) {
       const features = pointFeatures.map((feature) => {
         const coord = toLonLat(feature.getGeometry().getCoordinates());
-        const circle = new CircleGeom(fromLonLat(coord), radius * 1000); // radius in meters
+        const circle = new CircleGeom(fromLonLat(coord), radius * 1000);
         return new Feature({ geometry: circle });
       });
 
@@ -174,13 +172,13 @@ const MapComponent = () => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setPhotos(data); // Store fetched photos in state
+      setPhotos(data);
     } catch (error) {
       console.error("Error fetching photos:", error);
     }
   };
   
-  // Fetch photos when user's location is obtained or point is selected
+
   useEffect(() => {
     if (userLocation) {
       fetchPhotos(userLocation);
